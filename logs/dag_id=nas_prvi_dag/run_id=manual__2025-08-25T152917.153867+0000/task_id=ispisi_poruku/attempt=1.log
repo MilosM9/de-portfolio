@@ -1,0 +1,24 @@
+[2025-08-25T15:29:21.112+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2025-08-25T15:29:21.149+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: nas_prvi_dag.ispisi_poruku manual__2025-08-25T15:29:17.153867+00:00 [queued]>
+[2025-08-25T15:29:21.161+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: nas_prvi_dag.ispisi_poruku manual__2025-08-25T15:29:17.153867+00:00 [queued]>
+[2025-08-25T15:29:21.162+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 1
+[2025-08-25T15:29:21.188+0000] {taskinstance.py:2330} INFO - Executing <Task(BashOperator): ispisi_poruku> on 2025-08-25 15:29:17.153867+00:00
+[2025-08-25T15:29:21.200+0000] {warnings.py:112} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:61: DeprecationWarning: This process (pid=537) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  pid = os.fork()
+
+[2025-08-25T15:29:21.208+0000] {standard_task_runner.py:63} INFO - Started process 539 to run task
+[2025-08-25T15:29:21.208+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'nas_prvi_dag', 'ispisi_poruku', 'manual__2025-08-25T15:29:17.153867+00:00', '--job-id', '5', '--raw', '--subdir', 'DAGS_FOLDER/prvi_dag.py', '--cfg-path', '/tmp/tmp2uc1vcjg']
+[2025-08-25T15:29:21.217+0000] {standard_task_runner.py:91} INFO - Job 5: Subtask ispisi_poruku
+[2025-08-25T15:29:21.416+0000] {task_command.py:426} INFO - Running <TaskInstance: nas_prvi_dag.ispisi_poruku manual__2025-08-25T15:29:17.153867+00:00 [running]> on host 5ce1f97bdd1f
+[2025-08-25T15:29:21.639+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='nas_prvi_dag' AIRFLOW_CTX_TASK_ID='ispisi_poruku' AIRFLOW_CTX_EXECUTION_DATE='2025-08-25T15:29:17.153867+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2025-08-25T15:29:17.153867+00:00'
+[2025-08-25T15:29:21.641+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2025-08-25T15:29:21.643+0000] {subprocess.py:63} INFO - Tmp dir root location: /tmp
+[2025-08-25T15:29:21.645+0000] {subprocess.py:75} INFO - Running command: ['/usr/bin/bash', '-c', 'echo "Zdravo Airflow iz mog prvog DAG-a!"']
+[2025-08-25T15:29:21.673+0000] {subprocess.py:86} INFO - Output:
+[2025-08-25T15:29:21.679+0000] {subprocess.py:93} INFO - Zdravo Airflow iz mog prvog DAG-a!
+[2025-08-25T15:29:21.680+0000] {subprocess.py:97} INFO - Command exited with return code 0
+[2025-08-25T15:29:21.681+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2025-08-25T15:29:21.737+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=nas_prvi_dag, task_id=ispisi_poruku, run_id=manual__2025-08-25T15:29:17.153867+00:00, execution_date=20250825T152917, start_date=20250825T152921, end_date=20250825T152921
+[2025-08-25T15:29:21.791+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2025-08-25T15:29:21.823+0000] {taskinstance.py:3503} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2025-08-25T15:29:21.828+0000] {local_task_job_runner.py:222} INFO - ::endgroup::
