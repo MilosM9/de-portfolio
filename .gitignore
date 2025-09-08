@@ -1,0 +1,9 @@
+# Environment variables
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Docker logs (ako ih ne želite na Gitu)
+logs/

@@ -36,7 +36,7 @@ services:
     environment:
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      
+      AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY} 
       AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
       AIRFLOW_UID: 50000
