@@ -58,7 +58,7 @@ def load_users(ti):
 
 with DAG(
     dag_id='user_etl_pipeline',
-    start_date=pendulum.datetime(2025, 8, 25, tz="Europe/Belgrade"),
+    start_date=pendulum.datetime(2023, 8, 25, tz="Europe/Belgrade"),
     schedule_interval=None,
     catchup=False,
     tags=['project'],

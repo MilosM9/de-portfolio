@@ -10,7 +10,7 @@ BUCKET_NAME = "milos-de-portfolio-bucket-2025"
 
 @dag(
     dag_id='s3_upload_pipeline_v1',
-    start_date=pendulum.datetime(2025, 8, 26, tz="Europe/Belgrade"),
+    start_date=pendulum.datetime(2023, 8, 26, tz="Europe/Belgrade"),
     schedule_interval=None,
     catchup=False,
     tags=['aws', 's3', 'project'],

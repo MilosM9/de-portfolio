@@ -13,5 +13,10 @@ USER airflow
 RUN pip install --no-cache-dir \
     "apache-airflow==2.9.3" \
     "protobuf<5.0.0" \
-    apache-airflow-providers-apache-spark
+    apache-airflow-providers-apache-spark \
+    boto3 \
+    pandas \
+    sqlalchemy \
+    psycopg2-binary \
+    requests
 # --- Kraj izmene ---
