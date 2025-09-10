@@ -7,3 +7,7 @@ __pycache__/
 
 # Docker logs (ako ih ne želite na Gitu)
 logs/
+
+# Python cache
+__pycache__/
+*.pyc
