@@ -6499,3 +6499,10 @@
 [2025-09-10T19:06:41.094+0000] {logging_mixin.py:188} INFO - [2025-09-10T19:06:41.093+0000] {dag.py:3089} INFO - Sync 1 DAGs
 [2025-09-10T19:06:41.125+0000] {logging_mixin.py:188} INFO - [2025-09-10T19:06:41.124+0000] {dag.py:3947} INFO - Setting next_dagrun for nas_prvi_dag to None, run_after=None
 [2025-09-10T19:06:41.181+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/prvi_dag.py took 0.284 seconds
+[2025-09-10T19:07:11.436+0000] {processor.py:161} INFO - Started process (PID=351) to work on /opt/airflow/dags/prvi_dag.py
+[2025-09-10T19:07:11.438+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/prvi_dag.py for tasks to queue
+[2025-09-10T19:07:11.441+0000] {logging_mixin.py:188} INFO - [2025-09-10T19:07:11.440+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/prvi_dag.py
+[2025-09-10T19:07:11.473+0000] {processor.py:840} INFO - DAG(s) 'nas_prvi_dag' retrieved from /opt/airflow/dags/prvi_dag.py
+[2025-09-10T19:07:11.537+0000] {logging_mixin.py:188} INFO - [2025-09-10T19:07:11.536+0000] {dag.py:3089} INFO - Sync 1 DAGs
+[2025-09-10T19:07:11.564+0000] {logging_mixin.py:188} INFO - [2025-09-10T19:07:11.563+0000] {dag.py:3947} INFO - Setting next_dagrun for nas_prvi_dag to None, run_after=None
+[2025-09-10T19:07:11.597+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/prvi_dag.py took 0.174 seconds
