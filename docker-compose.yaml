@@ -1,31 +1,24 @@
-version: "3.9"
-
 services:
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U airflow"]
-      interval: 10s
-      retries: 5
+  # ========== AIRFLOW ==========
 
-  redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      retries: 5
-
-  # --- AIRFLOW WEBSERVER ---
-  airflow-webserver:
-    build: .
+  airflow-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: de-portfolio-airflow:latest
+    container_name: de-portfolio-airflow-scheduler-1
+    command: >
+      bash -c "
+      airflow db upgrade &&
+      airflow users create
+        --username admin
+        --firstname Admin
+        --lastname User
+        --role Admin
+        --email admin@example.com
+        --password admin || true &&
+      airflow scheduler
+      "
     depends_on:
       postgres:
         condition: service_healthy
@@ -33,110 +26,213 @@ services:
         condition: service_healthy
     environment:
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
-      AIRFLOW_UID: 50000
-      # !!! VAŽNA IZMENA - DODAJEMO I OVU PROMENLJIVU !!!
-      AIRFLOW__CORE__LOAD_EXAMPLES: "false" 
-    ports:
-      - "8080:8080"
-    command: >
-      bash -c "airflow db upgrade &&
-               airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin || true &&
-               airflow webserver"
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__FERNET_KEY: "ieadaVFUATO9jMQSY_VOtgQgrhsH5tIN_tmiqhjh_Vw="
+      AIRFLOW_UID: "50000"
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-    # !!! KLJUČNA NOVA IZMENA - DODAJEMO HEALTHCHECK !!!
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname $$(hostname) || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - spark_network
+
+  airflow-webserver:
+    image: de-portfolio-airflow:latest
+    container_name: de-portfolio-airflow-webserver-1
+    command: webserver
+    depends_on:
+      airflow-scheduler:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__FERNET_KEY: "ieadaVFUATO9jMQSY_VOtgQgrhsH5tIN_tmiqhjh_Vw="
+      AIRFLOW_UID: "50000"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+    ports:
+      - "8080:8080"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - spark_network
 
-  # --- AIRFLOW SCHEDULER ---
-  airflow-scheduler:
-    build: .
-    # !!! KLJUČNA NOVA IZMENA - ZAVISI OD WEBSERVERA !!!
-    depends_on:
-      airflow-webserver:
-        condition: service_healthy
-    environment:
-      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
-      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
-      AIRFLOW_UID: 50000
-    command: bash -c "airflow scheduler"
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      - ./plugins:/opt/airflow/plugins
-
-  # --- AIRFLOW WORKER ---
   airflow-worker:
-    build: .
-    # !!! KLJUČNA NOVA IZMENA - ZAVISI OD SCHEDULERA (koji zavisi od webservera) !!!
+    image: de-portfolio-airflow:latest
+    container_name: de-portfolio-airflow-worker-1
+    command: celery worker
     depends_on:
       airflow-scheduler:
         condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
-      AIRFLOW_UID: 50000
-    command: bash -c "airflow celery worker"
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__FERNET_KEY: "ieadaVFUATO9jMQSY_VOtgQgrhsH5tIN_tmiqhjh_Vw="
+      AIRFLOW_UID: "50000"
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python - << 'PY'\nimport redis;r=redis.Redis(host='redis',port=6379,db=0);print(r.ping())\nPY",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - spark_network
 
-  # ... (ostatak fajla ostaje isti - jupyter, spark, minio, itd.)
-  
+  # ========== SPARK ==========
+
+  spark-master:
+    image: apache/spark:3.5.1-java17
+    container_name: de-portfolio-spark-master-1
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.master.Master
+      - --host
+      - spark-master
+      - --port
+      - "7077"
+      - --webui-port
+      - "8081"
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+    ports:
+      - "7077:7077"
+      - "8081:8081"
+    restart: unless-stopped
+    networks:
+      - spark_network
+
+  spark-worker:
+    image: apache/spark:3.5.1-java17
+    container_name: de-portfolio-spark-worker-1
+    depends_on:
+      - spark-master
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.worker.Worker
+      - spark://spark-master:7077
+      - --webui-port
+      - "8082"
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+    ports:
+      - "8082:8082"
+    restart: unless-stopped
+    networks:
+      - spark_network
+
+  # ========== JUPYTER ==========
+
   jupyter:
     image: jupyter/base-notebook:latest
+    container_name: de-portfolio-jupyter-1
+    command: ["start-notebook.sh", "--NotebookApp.token="]
     ports:
       - "8888:8888"
     volumes:
       - ./notebooks:/home/jovyan/work
-    command: start-notebook.sh --NotebookApp.token=''
+    restart: unless-stopped
+    networks:
+      - spark_network
 
-  spark-master:
-    image: bitnami/spark:latest
-    environment:
-      - SPARK_MODE=master
-    ports:
-      - "8081:8080"
-      - "7077:7077"
-
-  spark-worker:
-    image: bitnami/spark:latest
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-    depends_on:
-      - spark-master
+  # ========== MINIO ==========
 
   minio:
     image: minio/minio:RELEASE.2025-05-24T17-08-30Z
     container_name: de-portfolio-minio-1
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+    command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
-    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio_data:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - spark_network
+
+  # ========== POSTGRES ==========
+
+  postgres:
+    image: postgres:15
+    container_name: de-portfolio-postgres-1
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - spark_network
+
+  # ========== REDIS ==========
+
+  redis:
+    image: redis:7
+    container_name: de-portfolio-redis-1
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - spark_network
+
+networks:
+  spark_network:
+    driver: bridge
 
 volumes:
   minio_data:

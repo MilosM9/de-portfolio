@@ -3,25 +3,41 @@ from pyspark.sql.functions import col, row_number
 from pyspark.sql.window import Window
 
 spark = (
-    SparkSession.builder.appName("MovieProcessingJob")
+    SparkSession.builder
+    .appName("MovieProcessingJob")
     .getOrCreate()
 )
 
-df = spark.read.csv("s3a://data-lake/IMDB Movies 2000 - 2020.csv", header=True, inferSchema=True)
+print("SparkSession podignut.")
 
-cleaned_df = df.filter(col("duration").isNotNull() & (col("duration") > 0)).withColumn(
-    "duration", col("duration").cast("integer")
-)
+try:
+    df = spark.read.csv(
+        "s3a://data-lake/IMDB_Movies_2000_2020.csv",
+        header=True,
+        inferSchema=True,
+    )
+    print(f"Ucitano {df.count()} redova.")
 
-windowSpec = Window.partitionBy("year").orderBy(col("duration").desc())
+    cleaned_df = (
+        df.filter(col("duration").isNotNull() & (col("duration") > 0))
+          .withColumn("duration", col("duration").cast("int"))
+    )
 
-longest_movie_per_year = cleaned_df.withColumn("row_number", row_number().over(windowSpec)).filter(
-    col("row_number") == 1
-).select("year", "title", "duration")
+    w = Window.partitionBy("year").orderBy(col("duration").desc())
+    longest = (
+        cleaned_df
+        .withColumn("rn", row_number().over(w))
+        .filter(col("rn") == 1)
+        .select("year", "title", "duration")
+    )
 
-output_path = "s3a://data-lake/longest_movie_per_year.csv"
-longest_movie_per_year.write.mode("overwrite").csv(output_path, header=True)
+    output_path = "s3a://data-lake/processed/longest_movie_per_year.csv"
+    longest.write.mode("overwrite").csv(output_path, header=True)
 
-print("Spark posao uspješno završen. Obrađeni podaci su snimljeni u MinIO.")
+    print(f"Snimljeno u {output_path}")
 
-spark.stop()
+except Exception as e:
+    print("Greska tokom Spark posla:", e)
+    raise
+finally:
+    spark.stop()

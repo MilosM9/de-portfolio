@@ -1,0 +1,6 @@
+apache-airflow-providers-apache-spark
+apache-airflow-providers-common-sql
+apache-airflow-providers-postgres
+celery
+redis
+psycopg2-binary

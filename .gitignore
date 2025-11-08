@@ -13,3 +13,15 @@ __pycache__/
 *.pyc
 
 aws-java-sdk-bundle-1.12.2.jar
+
+
+# primer
+*.jar
+*.zip
+*.tar.gz
+*.csv
+*.parquet
+dist/
+build/
+target/
+.venv/

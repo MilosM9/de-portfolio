@@ -1,0 +1,35 @@
+# Dockerfile.spark
+# Koristi ZVANIČNU Apache sliku (Spark 3.5.1 i Java 17)
+FROM apache/spark:3.5.1-java17
+
+# Spark slike podrazumevano koriste ne-root korisnika (UID 185).
+# Prelazimo na root za sistemske i globalne instalacije.
+USER root
+
+# Instalirajte Python i Pip
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+# Instalirajte Python zavisnosti globalno (kao root)
+RUN pip3 install --no-cache-dir \
+    pandas \
+    requests \
+    boto3
+
+# 💡 KLJUČNA IZMENA: Dodajte mkdir da biste osigurali da direktorijum postoji
+RUN mkdir -p /opt/spark/conf/
+
+# Kreiranje spark-defaults.conf sa MinIO/S3A konfiguracijom
+RUN cat > /opt/spark/conf/spark-defaults.conf <<EOL
+spark.hadoop.fs.s3a.endpoint                http://minio:9000
+spark.hadoop.fs.s3a.access.key              minio
+spark.hadoop.fs.s3a.secret.key              minio123
+spark.hadoop.fs.s3a.path.style.access       true
+spark.hadoop.fs.s3a.impl                    org.apache.hadoop.fs.s3a.S3AFileSystem
+spark.hadoop.fs.s3a.connection.timeout      60000
+spark.jars.packages                         org.apache.hadoop:hadoop-aws:3.4.1,com.amazonaws:aws-java-sdk-bundle:1.12.2
+EOL
+
+# Vratite se na podrazumevanog korisnika 'spark' (UID 185) za pokretanje servisa
+USER 185
